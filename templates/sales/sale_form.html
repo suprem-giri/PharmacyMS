@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4><i class="fas fa-shopping-cart"></i> {{ title }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="saleForm">
+                    {% csrf_token %}
+
+                    <!-- Sale Header -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="{{ form.customer.id_for_label }}" class="form-label">Customer</label>
+                            {{ form.customer }}
+                            {% if form.customer.errors %}
+                                <div class="text-danger small">{{ form.customer.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <label for="{{ form.discount.id_for_label }}" class="form-label">Discount (%)</label>
+                            {{ form.discount }}
+                            {% if form.discount.errors %}
+                                <div class="text-danger small">{{ form.discount.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <label for="{{ form.tax.id_for_label }}" class="form-label">Tax (%)</label>
+                            {{ form.tax }}
+                            {% if form.tax.errors %}
+                                <div class="text-danger small">{{ form.tax.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.payment_method.id_for_label }}" class="form-label">Payment Method</label>
+                            {{ form.payment_method }}
+                            {% if form.payment_method.errors %}
+                                <div class="text-danger small">{{ form.payment_method.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Sale Items -->
+                    <h5 class="mb-3">Sale Items</h5>
+                    <div id="sale-items">
+                        {{ formset.management_form }}
+                        {% for item_form in formset %}
+                            <div class="sale-item card mb-3">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Medicine</label>
+                                            {{ item_form.medicine }}
+                                            {% if item_form.medicine.errors %}
+                                                <div class="text-danger small">{{ item_form.medicine.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Quantity</label>
+                                            {{ item_form.quantity }}
+                                            {% if item_form.quantity.errors %}
+                                                <div class="text-danger small">{{ item_form.quantity.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Unit Price (₹)</label>
+                                            {{ item_form.unit_price }}
+                                            {% if item_form.unit_price.errors %}
+                                                <div class="text-danger small">{{ item_form.unit_price.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Total</label>
+                                            <input type="text" class="form-control item-total" readonly>
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end">
+                                            {% if forloop.first %}
+                                                <button type="button" class="btn btn-success" id="add-item">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            {% else %}
+                                                <button type="button" class="btn btn-danger remove-item">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Total Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-8"></div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Subtotal:</strong>
+                                        <span id="subtotal">₹0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Discount:</strong>
+                                        <span id="discount-amount">₹0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Tax:</strong>
+                                        <span id="tax-amount">₹0.00</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <strong class="text-primary">Grand Total:</strong>
+                                        <strong class="text-primary" id="grand-total">₹0.00</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'sales:sale_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Complete Sale
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formset = document.querySelector('#sale-items');
+    const managementForm = formset.querySelector('[name$="-TOTAL_FORMS"]');
+    let formCount = parseInt(managementForm.value);
+
+    // Calculate totals
+    function calculateTotals() {
+        let subtotal = 0;
+        document.querySelectorAll('.sale-item').forEach(item => {
+            const medicine = item.querySelector('[name$="-medicine"]');
+            const quantity = item.querySelector('[name$="-quantity"]');
+            const unitPrice = item.querySelector('[name$="-unit_price"]');
+            const total = item.querySelector('.item-total');
+
+            if (medicine.value && quantity.value && unitPrice.value) {
+                const itemTotal = parseFloat(quantity.value) * parseFloat(unitPrice.value);
+                total.value = '₹' + itemTotal.toFixed(2);
+                subtotal += itemTotal;
+            }
+        });
+
+        const discountPercent = parseFloat(document.querySelector('[name="discount"]').value) || 0;
+        const taxPercent = parseFloat(document.querySelector('[name="tax"]').value) || 0;
+
+        const discountAmount = subtotal * (discountPercent / 100);
+        const taxableAmount = subtotal - discountAmount;
+        const taxAmount = taxableAmount * (taxPercent / 100);
+        const grandTotal = taxableAmount + taxAmount;
+
+        document.getElementById('subtotal').textContent = '₹' + subtotal.toFixed(2);
+        document.getElementById('discount-amount').textContent = '₹' + discountAmount.toFixed(2);
+        document.getElementById('tax-amount').textContent = '₹' + taxAmount.toFixed(2);
+        document.getElementById('grand-total').textContent = '₹' + grandTotal.toFixed(2);
+    }
+
+    // Add new item
+    document.getElementById('add-item').addEventListener('click', function() {
+        const newForm = formset.querySelector('.sale-item').cloneNode(true);
+        formCount++;
+        managementForm.value = formCount;
+
+        // Update form indices
+        newForm.querySelectorAll('input, select').forEach(field => {
+            const name = field.name.replace(/-\d+-/, `-${formCount - 1}-`);
+            field.name = name;
+            field.id = name;
+            if (field.type !== 'hidden') field.value = '';
+        });
+
+        // Change button to remove
+        const button = newForm.querySelector('button');
+        button.className = 'btn btn-danger remove-item';
+        button.innerHTML = '<i class="fas fa-trash"></i>';
+
+        formset.appendChild(newForm);
+    });
+
+    // Remove item
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-item') || e.target.closest('.remove-item')) {
+            e.target.closest('.sale-item').remove();
+            formCount--;
+            managementForm.value = formCount;
+            calculateTotals();
+        }
+    });
+
+    // Recalculate on input change
+    document.addEventListener('input', calculateTotals);
+    document.addEventListener('change', calculateTotals);
+
+    // Initial calculation
+    calculateTotals();
+});
+</script>
+{% endblock %}

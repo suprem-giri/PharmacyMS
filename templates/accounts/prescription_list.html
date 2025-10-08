@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Prescriptions for {{ customer.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Prescriptions for {{ customer.name }}</h2>
+            <a href="{% url 'accounts:prescription_create' customer_pk=customer.pk %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Upload Prescription
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Prescription History</h5>
+            </div>
+            <div class="card-body">
+                {% if prescriptions %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Prescribed By</th>
+                                    <th>Prescription Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prescription in prescriptions %}
+                                    <tr>
+                                        <td>{{ prescription.uploaded_at|date:"M d, Y H:i" }}</td>
+                                        <td>{{ prescription.prescribed_by|default:"-" }}</td>
+                                        <td>{{ prescription.prescription_date|date:"M d, Y"|default:"-" }}</td>
+                                        <td>
+                                            <a href="{% url 'accounts:prescription_detail' customer_pk=customer.pk pk=prescription.pk %}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            <a href="{% url 'accounts:prescription_delete' customer_pk=customer.pk pk=prescription.pk %}" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-medical fa-3x text-muted mb-3"></i>
+                        <h5>No prescriptions found</h5>
+                        <p class="text-muted">No prescriptions have been uploaded for this customer yet.</p>
+                        <a href="{% url 'accounts:prescription_create' customer_pk=customer.pk %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Upload First Prescription
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <a href="{% url 'accounts:customer_detail' pk=customer.pk %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Customer Details
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+        <p class="text-muted">Welcome back, {{ user.username }}! Here's your pharmacy overview.</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Today's Sales</h5>
+                        <h3>₹{{ total_sales_today }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-rupee-sign fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Monthly Sales</h5>
+                        <h3>₹{{ total_sales_month }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Monthly Profit</h5>
+                        <h3>₹{{ profit }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-coins fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Total Medicines</h5>
+                        <h3>{{ total_medicines }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-pills fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts Row -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5><i class="fas fa-exclamation-triangle"></i> Alerts</h5>
+            </div>
+            <div class="card-body">
+                {% if low_stock_medicines > 0 %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ low_stock_medicines }} medicines are running low on stock
+                        <a href="{% url 'medicines:low_stock_alert' %}" class="alert-link">View Details</a>
+                    </div>
+                {% endif %}
+                {% if expiring_soon > 0 %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-calendar-times"></i>
+                        {{ expiring_soon }} medicines are expiring soon
+                        <a href="{% url 'reports:expiry_report' %}" class="alert-link">View Details</a>
+                    </div>
+                {% endif %}
+                {% if low_stock_medicines == 0 and expiring_soon == 0 %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> All systems normal!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-star"></i> Top Selling Medicines</h5>
+            </div>
+            <div class="card-body">
+                {% if top_medicines %}
+                    <ul class="list-group list-group-flush">
+                        {% for medicine in top_medicines %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ medicine.name }}
+                                <span class="badge bg-primary rounded-pill">{{ medicine.total_sold }} sold</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No sales data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Sales -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Recent Sales</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_sales %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sale in recent_sales %}
+                                    <tr>
+                                        <td>{{ sale.id }}</td>
+                                        <td>{{ sale.customer.name|default:"Walk-in" }}</td>
+                                        <td>₹{{ sale.final_amount }}</td>
+                                        <td>{{ sale.created_at|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            <a href="{% url 'sales:sale_detail' sale.pk %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No recent sales</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

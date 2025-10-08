@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Prescription Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Prescription Details</h5>
+                    <div>
+                        <a href="{% url 'accounts:prescription_delete' customer_pk=customer.pk pk=prescription.pk %}" class="btn btn-sm btn-danger">
+                            <i class="fas fa-trash"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Customer Information</h6>
+                        <p><strong>Name:</strong> {{ customer.name }}</p>
+                        <p><strong>Contact:</strong> {{ customer.contact_no }}</p>
+                        <p><strong>Email:</strong> {{ customer.email|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Prescription Information</h6>
+                        <p><strong>Uploaded:</strong> {{ prescription.uploaded_at|date:"M d, Y H:i" }}</p>
+                        <p><strong>Prescribed By:</strong> {{ prescription.prescribed_by|default:"-" }}</p>
+                        <p><strong>Prescription Date:</strong> {{ prescription.prescription_date|date:"M d, Y"|default:"-" }}</p>
+                    </div>
+                </div>
+
+                {% if prescription.prescription_file %}
+                    <div class="mt-4">
+                        <h6>Prescription File</h6>
+                        <div class="border p-3">
+                            {% if prescription.prescription_file.url|slice:"-4:"|lower == ".pdf" %}
+                                <iframe src="{{ prescription.prescription_file.url }}" width="100%" height="500px" style="border: none;"></iframe>
+                                <div class="mt-2">
+                                    <a href="{{ prescription.prescription_file.url }}" target="_blank" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-external-link-alt"></i> Open in New Tab
+                                    </a>
+                                    <a href="{{ prescription.prescription_file.url }}" download class="btn btn-sm btn-secondary">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                </div>
+                            {% else %}
+                                <img src="{{ prescription.prescription_file.url }}" alt="Prescription" class="img-fluid" style="max-height: 500px;">
+                                <div class="mt-2">
+                                    <a href="{{ prescription.prescription_file.url }}" target="_blank" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-external-link-alt"></i> View Full Size
+                                    </a>
+                                    <a href="{{ prescription.prescription_file.url }}" download class="btn btn-sm btn-secondary">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if prescription.prescription_text %}
+                    <div class="mt-4">
+                        <h6>Prescription Details</h6>
+                        <div class="border p-3 bg-light">
+                            <pre style="white-space: pre-wrap; font-family: inherit;">{{ prescription.prescription_text }}</pre>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if prescription.notes %}
+                    <div class="mt-4">
+                        <h6>Additional Notes</h6>
+                        <div class="border p-3 bg-light">
+                            <p style="white-space: pre-wrap;">{{ prescription.notes }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="mt-4">
+                    <a href="{% url 'accounts:prescription_list' customer_pk=customer.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Prescriptions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4><i class="fas fa-truck-loading"></i> {{ title }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="purchaseForm">
+                    {% csrf_token %}
+
+                    <!-- Purchase Header -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="{{ form.supplier.id_for_label }}" class="form-label">Supplier</label>
+                            {{ form.supplier }}
+                            {% if form.supplier.errors %}
+                                <div class="text-danger small">{{ form.supplier.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.invoice_number.id_for_label }}" class="form-label">Invoice Number</label>
+                            {{ form.invoice_number }}
+                            {% if form.invoice_number.errors %}
+                                <div class="text-danger small">{{ form.invoice_number.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.purchase_date.id_for_label }}" class="form-label">Purchase Date</label>
+                            {{ form.purchase_date }}
+                            {% if form.purchase_date.errors %}
+                                <div class="text-danger small">{{ form.purchase_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Purchase Items -->
+                    <h5 class="mb-3">Purchase Items</h5>
+                    <div id="purchase-items">
+                        {{ formset.management_form }}
+                        {% for item_form in formset %}
+                            <div class="purchase-item card mb-3">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Medicine</label>
+                                            {{ item_form.medicine }}
+                                            {% if item_form.medicine.errors %}
+                                                <div class="text-danger small">{{ item_form.medicine.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Quantity</label>
+                                            {{ item_form.quantity }}
+                                            {% if item_form.quantity.errors %}
+                                                <div class="text-danger small">{{ item_form.quantity.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Unit Price (₹)</label>
+                                            {{ item_form.unit_price }}
+                                            {% if item_form.unit_price.errors %}
+                                                <div class="text-danger small">{{ item_form.unit_price.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Expiry Date</label>
+                                            {{ item_form.expiry_date }}
+                                            {% if item_form.expiry_date.errors %}
+                                                <div class="text-danger small">{{ item_form.expiry_date.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Batch Number</label>
+                                            {{ item_form.batch_number }}
+                                            {% if item_form.batch_number.errors %}
+                                                <div class="text-danger small">{{ item_form.batch_number.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-1 d-flex align-items-end">
+                                            {% if forloop.first %}
+                                                <button type="button" class="btn btn-success" id="add-item">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            {% else %}
+                                                <button type="button" class="btn btn-danger remove-item">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Total Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-8"></div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Total Amount:</strong>
+                                        <strong id="total-amount">₹0.00</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'sales:purchase_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Complete Purchase
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formset = document.querySelector('#purchase-items');
+    const managementForm = formset.querySelector('[name$="-TOTAL_FORMS"]');
+    let formCount = parseInt(managementForm.value);
+
+    // Calculate totals
+    function calculateTotals() {
+        let total = 0;
+        document.querySelectorAll('.purchase-item').forEach(item => {
+            const quantity = item.querySelector('[name$="-quantity"]');
+            const unitPrice = item.querySelector('[name$="-unit_price"]');
+
+            if (quantity.value && unitPrice.value) {
+                const itemTotal = parseFloat(quantity.value) * parseFloat(unitPrice.value);
+                total += itemTotal;
+            }
+        });
+
+        document.getElementById('total-amount').textContent = '₹' + total.toFixed(2);
+    }
+
+    // Add new item
+    document.getElementById('add-item').addEventListener('click', function() {
+        const newForm = formset.querySelector('.purchase-item').cloneNode(true);
+        formCount++;
+        managementForm.value = formCount;
+
+        // Update form indices
+        newForm.querySelectorAll('input, select').forEach(field => {
+            const name = field.name.replace(/-\d+-/, `-${formCount - 1}-`);
+            field.name = name;
+            field.id = name;
+            if (field.type !== 'hidden') field.value = '';
+        });
+
+        // Change button to remove
+        const button = newForm.querySelector('button');
+        button.className = 'btn btn-danger remove-item';
+        button.innerHTML = '<i class="fas fa-trash"></i>';
+
+        formset.appendChild(newForm);
+    });
+
+    // Remove item
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-item') || e.target.closest('.remove-item')) {
+            e.target.closest('.purchase-item').remove();
+            formCount--;
+            managementForm.value = formCount;
+            calculateTotals();
+        }
+    });
+
+    // Recalculate on input change
+    document.addEventListener('input', calculateTotals);
+    document.addEventListener('change', calculateTotals);
+
+    // Initial calculation
+    calculateTotals();
+});
+</script>
+{% endblock %}

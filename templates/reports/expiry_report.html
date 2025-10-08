@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Expiry Report - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2><i class="fas fa-calendar-times"></i> Expiry Report</h2>
+        <div>
+            <button onclick="window.print()" class="btn btn-outline-primary me-2">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <a href="{% url 'reports:export_report' 'expiry' %}" class="btn btn-outline-success">
+                <i class="fas fa-download"></i> Export CSV
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Summary -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Expiry Report:</strong> Medicines expiring within the next 90 days. Total: {{ medicines|length }} medicine{{ medicines|length|pluralize }}.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expiry Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Medicines Expiring Soon</h5>
+            </div>
+            <div class="card-body">
+                {% if medicines %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Batch No</th>
+                                    <th>Manufacturer</th>
+                                    <th>Current Stock</th>
+                                    <th>Expiry Date</th>
+                                    <th>Days Left</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for medicine in medicines %}
+                                    <tr class="{% if medicine.expiry_date < today %}table-danger{% elif medicine.expiry_date <= expiry_warning_date %}table-warning{% else %}table-info{% endif %}">
+                                        <td>{{ medicine.name }}</td>
+                                        <td>{{ medicine.batch_no }}</td>
+                                        <td>{{ medicine.manufacturer }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if medicine.quantity <= 5 %}danger{% elif medicine.quantity <= 10 %}warning{% else %}success{% endif %}">
+                                                {{ medicine.quantity }}
+                                            </span>
+                                        </td>
+                                        <td>{{ medicine.expiry_date|date:"M d, Y" }}</td>
+                                        <td>
+                                            {% with days_left=medicine.expiry_date|timeuntil:today|default:"Expired" %}
+                                                {% if days_left == "Expired" %}
+                                                    <span class="badge bg-danger">Expired</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">{{ days_left }}</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </td>
+                                        <td>
+                                            {% if medicine.expiry_date < today %}
+                                                <span class="badge bg-danger">Expired</span>
+                                            {% elif medicine.expiry_date <= expiry_warning_date %}
+                                                <span class="badge bg-warning">Expiring Soon</span>
+                                            {% else %}
+                                                <span class="badge bg-info">Valid</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'medicines:medicine_detail' medicine.pk %}" class="btn btn-sm btn-outline-info" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'medicines:medicine_update' medicine.pk %}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h4 class="text-success">All Clear!</h4>
+                        <p class="text-muted">No medicines are expiring within the next 90 days.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+@media print {
+    .btn, .card .btn {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}

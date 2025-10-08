@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}{{ medicine.name }} - Medicine Details{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4><i class="fas fa-pills"></i> Medicine Details</h4>
+                <div>
+                    <a href="{% url 'medicines:medicine_update' medicine.pk %}" class="btn btn-light btn-sm me-2">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{% url 'medicines:medicine_list' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-arrow-left"></i> Back to Medicines
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Medicine Information</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Name:</strong></td>
+                                <td>{{ medicine.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Manufacturer:</strong></td>
+                                <td>{{ medicine.manufacturer }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Batch No:</strong></td>
+                                <td>{{ medicine.batch_no }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Price:</strong></td>
+                                <td>₹{{ medicine.price|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Expiry Date:</strong></td>
+                                <td>
+                                    {{ medicine.expiry_date|date:"M d, Y" }}
+                                    {% if medicine.expiry_date < today %}
+                                        <span class="badge bg-danger ms-2">Expired</span>
+                                    {% elif medicine.expiry_date <= expiry_warning_date %}
+                                        <span class="badge bg-warning ms-2">Expiring Soon</span>
+                                    {% else %}
+                                        <span class="badge bg-success ms-2">Valid</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Added On:</strong></td>
+                                <td>{{ medicine.added_on|date:"M d, Y" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Stock Information</h5>
+                        <div class="text-center">
+                            <div class="mb-3">
+                                <h3 class="{% if medicine.quantity <= 5 %}text-danger{% elif medicine.quantity <= 10 %}text-warning{% else %}text-success{% endif %}">
+                                    {{ medicine.quantity }}
+                                </h3>
+                                <p class="text-muted">Current Stock</p>
+                                {% if medicine.quantity <= 10 %}
+                                    <div class="alert alert-{% if medicine.quantity <= 5 %}danger{% else %}warning{% endif %} small">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {% if medicine.quantity <= 5 %}Critical{% else %}Low{% endif %} Stock Alert
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

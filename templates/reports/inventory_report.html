@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}Inventory Report - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2><i class="fas fa-boxes"></i> Inventory Report</h2>
+        <div>
+            <button onclick="window.print()" class="btn btn-outline-primary me-2">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <a href="{% url 'reports:export_report' 'inventory' %}" class="btn btn-outline-success">
+                <i class="fas fa-download"></i> Export CSV
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Total Medicines</h5>
+                        <h3>{{ medicines|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-pills fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Good Stock</h5>
+                        <h3>{{ good_stock|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Expiring Soon</h5>
+                        <h3>{{ expiring_soon|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Expired</h5>
+                        <h3>{{ expired|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-times-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Inventory Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Complete Inventory</h5>
+            </div>
+            <div class="card-body">
+                {% if medicines %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Manufacturer</th>
+                                    <th>Batch No</th>
+                                    <th>Stock</th>
+                                    <th>Price</th>
+                                    <th>Expiry Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for medicine in medicines %}
+                                    <tr class="{% if medicine.expiry_date < today %}table-danger{% elif medicine.expiry_date <= expiry_warning_date %}table-warning{% endif %}">
+                                        <td>{{ medicine.name }}</td>
+                                        <td>{{ medicine.manufacturer }}</td>
+                                        <td>{{ medicine.batch_no }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if medicine.quantity <= 5 %}danger{% elif medicine.quantity <= 10 %}warning{% else %}success{% endif %}">
+                                                {{ medicine.quantity }}
+                                            </span>
+                                        </td>
+                                        <td>₹{{ medicine.price|floatformat:2 }}</td>
+                                        <td>{{ medicine.expiry_date|date:"M d, Y" }}</td>
+                                        <td>
+                                            {% if medicine.expiry_date < today %}
+                                                <span class="badge bg-danger">Expired</span>
+                                            {% elif medicine.expiry_date <= expiry_warning_date %}
+                                                <span class="badge bg-warning">Expiring Soon</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Valid</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-boxes fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No inventory data</h4>
+                        <p class="text-muted">No medicines found in inventory.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+@media print {
+    .btn, .card .btn {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}

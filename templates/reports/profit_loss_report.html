@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}Profit & Loss Report - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2><i class="fas fa-chart-line"></i> Profit & Loss Report</h2>
+        <div>
+            <button onclick="window.print()" class="btn btn-outline-primary me-2">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <a href="{% url 'reports:export_report' 'profit_loss' %}" class="btn btn-outline-success">
+                <i class="fas fa-download"></i> Export CSV
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Date Filter -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="start_date" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="end_date" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                        <a href="{% url 'reports:profit_loss_report' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Sales Revenue</h5>
+                        <h3>₹{{ sales_revenue|floatformat:2 }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-arrow-up fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Purchase Costs</h5>
+                        <h3>₹{{ purchase_costs|floatformat:2 }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-arrow-down fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-{% if profit_loss >= 0 %}primary{% else %}warning{% endif %} text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Net Profit/Loss</h5>
+                        <h3>₹{{ profit_loss|floatformat:2 }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-{% if profit_loss >= 0 %}chart-line{% else %}chart-line-down{% endif %} fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Report -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Profit & Loss Analysis ({{ start_date|date:"M d, Y" }} - {{ end_date|date:"M d, Y" }})</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-success">Revenue</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Total Sales Revenue:</td>
+                                <td class="text-end text-success">₹{{ sales_revenue|floatformat:2 }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-danger">Expenses</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Purchase Costs:</td>
+                                <td class="text-end text-danger">₹{{ purchase_costs|floatformat:2 }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="alert alert-{% if profit_loss >= 0 %}success{% else %}warning{% endif %}">
+                            <h5 class="alert-heading">
+                                <i class="fas fa-{% if profit_loss >= 0 %}smile{% else %}frown{% endif %}"></i>
+                                {% if profit_loss >= 0 %}Profit{% else %}Loss{% endif %} Summary
+                            </h5>
+                            <p class="mb-0">
+                                For the period {{ start_date|date:"M d, Y" }} to {{ end_date|date:"M d, Y" }},
+                                your pharmacy has generated a net {% if profit_loss >= 0 %}profit{% else %}loss{% endif %} of
+                                <strong>₹{{ profit_loss|floatformat:2 }}</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+@media print {
+    .btn, .card .btn {
+        display: none !important;
+    }
+    .form-control, .form-select {
+        border: none !important;
+        background: transparent !important;
+    }
+}
+</style>
+{% endblock %}
